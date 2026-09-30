@@ -1,0 +1,73 @@
+# ============================================================
+# 招聘信息采集配置
+# 项目：课题五 企业端岗位数据（苏链智绘队）
+# 修改本文件后先跑 --dry-run 验证，确认无误再正式采集
+# ============================================================
+
+# 采集人（导出表里的"采集人"列；正式批次必须填写）
+collector: "张庆阳"
+
+# 数据根目录（相对于 工具/招聘采集/）
+data_root: "data"
+
+# ---------------- 筛选条件（可留空 = 不过滤） ----------------
+filters:
+  # 只保留岗位名命中以下关键词的记录；留空则全收，后续人工复核岗位族
+  title_keywords: []
+  # 只保留这些区县（用 model.py 提取的 district 字段匹配）
+  districts: []
+  # 只保留这些平台的记录
+  platforms: []
+
+# ---------------- 渠道配置 ----------------
+channels:
+
+  # A. 苏高新人才网：2026-09-29 已完成技术验证与合规评估
+  #    合规依据：区属公共就业服务平台；仅访问未登录访客可见公开接口；
+  #    限速 2 秒；不采集联系方式。老师口头报备记录见交接报告 6.2。
+  sndhr:
+    adapter: sndhr
+    enabled: true
+    compliance_confirmed: true   # 渠道合规评估表已填写并留档
+    delay_seconds: 2.0           # 请求间隔，下限 1 秒（代码强制）
+    timeout_seconds: 30
+    retry: 3
+    page_size: 50
+    with_detail: true            # 采详情（岗位描述原文）
+    # limit: 5                   # 试跑时解开注释
+
+  # B. 国家 24365 平台：待评估。评估通过前 enabled 必须保持 false。
+  #    评估步骤：1) 访问规则与条款核查 2) 公开接口调研 3) 填渠道合规评估表
+  #    4) 团队确认后将 enabled 与 compliance_confirmed 改 true。
+  platform_24365:
+    adapter: generic_json
+    enabled: false
+    compliance_confirmed: false
+    list_url: ""                 # 评估后填写
+    page_param: "page"
+    size_param: "pageSize"
+    page_size: 20
+    max_pages: 5                 # 评估期上限
+    records_path: "data.list"
+    field_map: {}
+
+  # 人工抽样导入（商业平台唯一合规路径；以及 CnOpenData 授权切片）
+  manual_import:
+    adapter: csv_import
+    enabled: false               # 有文件要导入时再开
+    compliance_confirmed: true   # 人工抄录/授权文件本身即合规依据
+    files: []
+    # files:
+    #   - path: "data/manual/人工抽样_20261005.csv"
+    #     platform: "boss_manual"
+    #     field_map:
+    #       job_title: "职位名称"
+    #       company: "公司名称"
+    #       location: "工作地点"
+    #       salary_raw: "薪资"
+    #       job_description: "职位描述"
+    #       source_url: "原始链接"
+
+# ---------------- 导出 ----------------
+export:
+  format: xlsx    # xlsx 或 csv
